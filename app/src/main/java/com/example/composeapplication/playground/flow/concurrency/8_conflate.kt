@@ -1,0 +1,24 @@
+package com.example.composeapplication.playground.flow.concurrency
+
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.flow
+
+suspend fun main() = coroutineScope {
+
+    val flow = flow {
+        repeat(5) {
+            println("Emitter:  Start Cooking pancake $it")
+            kotlinx.coroutines.delay(100)
+            println("Emitter:  Pancake $it ready!")
+            emit(it)
+        }
+    }.conflate()
+
+    flow.collect{
+        println("Collector:  Start Eating pancake $it")
+        kotlinx.coroutines.delay(300)
+        println("Collector:  Finish eating pancake $it")
+    }
+}

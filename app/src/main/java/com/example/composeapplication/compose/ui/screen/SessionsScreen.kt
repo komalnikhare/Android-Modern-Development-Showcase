@@ -1,0 +1,198 @@
+package com.example.composeapplication.compose.ui.screen
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewScreenSizes
+import androidx.compose.ui.unit.dp
+import com.example.composeapplication.compose.ui.component.SessionItem
+import com.example.composeapplication.compose.data.ConferenceDataUiState
+import com.example.composeapplication.compose.data.Day
+import com.example.composeapplication.compose.data.SessionInfo
+import com.example.composeapplication.compose.data.fake
+import com.example.composeapplication.compose.data.fake3
+import com.example.composeapplication.compose.data.fake4
+import com.example.composeapplication.compose.data.fake5
+import com.example.composeapplication.compose.data.fake6
+import com.example.composeapplication.ui.theme.Red30TechTheme
+import com.example.composeapplication.R
+import com.example.composeapplication.compose.ui.component.EmptyConferenceData
+import com.example.composeapplication.compose.data.sessionInfosByDay
+
+@Composable
+fun SessionsScreen(
+    modifier: Modifier = Modifier,
+    uiState: ConferenceDataUiState,
+    onSessionClick: (sessionId: Int) -> Unit = {},
+    onFavoriteClick: (sessionId: Int) -> Unit = {},
+    onDayClick: (day: Day) -> Unit = {}
+) {
+   Column(
+       modifier = modifier.fillMaxSize()
+   ) {
+       when {
+           uiState.isLoading -> LoadingIndicator()
+           uiState.sessionInfos.isEmpty() -> EmptyConferenceData()
+           else -> {
+               SessionList(
+                   modifier = Modifier,
+                   uiState = uiState,
+                   onSessionClick = onSessionClick,
+                   onFavoriteClick = onFavoriteClick,
+                   onDayClick = onDayClick
+               )
+           }
+       }
+
+   }
+}
+@Composable
+fun SessionList(
+    modifier: Modifier = Modifier,
+    uiState: ConferenceDataUiState,
+    onSessionClick: (sessionId: Int) -> Unit,
+    onFavoriteClick: (sessionId: Int) -> Unit,
+    onDayClick: (day: Day) -> Unit = {}
+){
+    var selectedChipIndex by remember { mutableIntStateOf(0) }
+    LazyVerticalGrid(
+        modifier = modifier
+            .fillMaxSize(),
+        columns = GridCells.Adaptive(330.dp)
+    ){
+        item(span = { GridItemSpan(maxLineSpan) }) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                dayChipItems.forEachIndexed { index, chipItem ->
+                    FilterChip(
+                        selected = selectedChipIndex == index,
+                        onClick = {
+                            selectedChipIndex = index
+                            onDayClick(chipItem.day)
+                        },
+                        label = {
+                            Text(stringResource(chipItem.labelResourceId))
+                        }
+                    )
+                }
+
+            }
+        }
+        items(uiState.sessionInfosByDay){
+            SessionItem(
+                sessionInfo = it,
+                onSessionClick = onSessionClick,
+                onFavoriteClick = onFavoriteClick
+            )
+        }
+    }
+}
+
+@Composable
+fun LoadingIndicator(modifier: Modifier = Modifier){
+    Column(
+        modifier = modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.padding(64.dp)
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Text(stringResource(R.string.loading))
+
+    }
+}
+
+
+data class DayChipItem(
+    val day: Day,
+    val labelResourceId: Int
+)
+
+val dayChipItems = listOf(
+    DayChipItem(Day.Day1, R.string.day_1_label),
+    DayChipItem(Day.Day2, R.string.day_2_label)
+)
+
+@PreviewScreenSizes
+@Composable
+private fun SessionScreenPreview() {
+    Red30TechTheme {
+        SessionsScreen(
+            uiState = ConferenceDataUiState(
+                sessionInfos = listOf(
+                    SessionInfo.fake(),
+                    SessionInfo.fake3(),
+                    SessionInfo.fake4(),
+                    SessionInfo.fake5(),
+                    SessionInfo.fake6(),
+                )
+            ),
+            onSessionClick = {},
+            onFavoriteClick = {},
+            onDayClick = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun SessionScreenLoadingPreview() {
+    Red30TechTheme {
+        Surface {
+            SessionsScreen(
+                uiState = ConferenceDataUiState(isLoading = true),
+                onSessionClick = {},
+                onFavoriteClick = {},
+                onDayClick = {}
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun SessionScreenEmptyDataPreview() {
+    Red30TechTheme {
+        Surface {
+            SessionsScreen(
+                uiState = ConferenceDataUiState(
+                    isLoading = false,
+                    errorMessage = R.string.unable_to_load_conference_data_error
+                ),
+                onSessionClick = {},
+                onFavoriteClick = {},
+                onDayClick = {}
+            )
+        }
+    }
+}
